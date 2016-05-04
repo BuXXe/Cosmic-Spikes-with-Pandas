@@ -19,7 +19,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 import matplotlib
 matplotlib.use('TkAgg')
-
+import ImportHelpers
 
 # TODO: better integration of unpsike parameters. setting parameters after compeltion is dirty
 # TODO: problem with focus / selection of listbox lost when clicking somewhere else
@@ -66,16 +66,16 @@ class CustomTest(Test):
                 # differentiate if original spectroscopy txt or already processed csv
                 # use file ending as criterion
                 if os.path.splitext(filepath)[1].lower() == ".txt":              
-                    data = convertTxtToPandaFrame(filepath)
+                    data = ImportHelpers.convertTxtToPandaFrame(filepath)
                 elif os.path.splitext(filepath)[1].lower() == ".csv":
-                    data = convertCsvToPandaFrame(filepath)
+                    data = ImportHelpers.convertCsvToPandaFrame(filepath)
                 
                 # append to data array and UI list
                 activeDataList.append(DataSet(data,os.path.split(filepath)[1]))
                 self.item_list.insert(END,os.path.split(filepath)[1])
-            except:
+            except :
                 self.write_to_Debug("[ERROR]: Processing of file: "+filepath+" failed\n", ("e"))
-
+                
     # export_csv_button_command --
     #
     # Callback to handle export_csv_button widget option -command
@@ -206,18 +206,17 @@ class CustomTest(Test):
                 self.createPreview()
 
 
-        
-
     # run_unspike_button_command --
     #
     # Callback to handle run_unspike_button widget option -command
     def run_unspike_button_command(self, *args):
-        threshold = self.threshold_entry.get()
-        iterations = self.iterations_entry.get()
+        # check if nothing is selected, then do nothing
         if not self.item_list.curselection():
             return
         
         # try and get threshold / iteration count stop if not digits
+        threshold = self.threshold_entry.get()
+        iterations = self.iterations_entry.get()
         if not iterations.isdigit():
             self.write_to_Debug("[ERROR]: The iterations variable is not a valid number\n", ("e"))
             return
@@ -225,99 +224,32 @@ class CustomTest(Test):
         if not threshold.isdigit():
             self.write_to_Debug("[ERROR]: The threshold variable is not a valid number\n", ("e"))
             return
-        
+
+
+        # Unspiking starts here
         activeDataList[self.item_list.curselection()[0]].initProcessedDataWithOriginal()
-        
-        
+                
         for x in xrange(0,int(iterations)):
             self.write_to_Debug("[INFO]: Computing iteration "+str(x+1)+" for data set.\n",None)
-            
             global root
             root.update()
-            hasChanged = activeDataList[self.item_list.curselection()[0]].errorcorrectdiff( int(threshold),True)
             
+            #hasChanged = activeDataList[self.item_list.curselection()[0]].errorcorrectdiff( int(threshold),True)
+            hasChanged = activeDataList[self.item_list.curselection()[0]].sophisticatedErrorCorrection( int(threshold))
+            
+            # in case we reach a stagnation, stop processing
             if hasChanged==False:
                 self.write_to_Debug("[INFO]: No more changes in iteration: "+str(x+1)+". Processing stopped\n",None)
                 break
         self.write_to_Debug("[INFO]: Computations completed\n",None)
 
+        # this sets the computation parameters in the dataset and visualizes them in the GUI
         activeDataList[self.item_list.curselection()[0]].setProcessingParameters(int(iterations),int(threshold))
         self.updateTextBoxes()
-
+        # Unspiking ends here
 
 
     # END CALLBACK CODE
-
-    # BEGIN USER CODE class
-    
-# We want to import an already processed set
-# we have to ensure that it has the same Dataframe format as the Txt importer
-# meaning: columns may only be x, Frame1, Frame2.....
-def convertCsvToPandaFrame(inputf):
-    df = pd.read_csv(inputf,sep=";")
-    for entry in df.columns.values:
-        if entry is not "x" and "Frame" not in entry:
-            df.drop(entry, axis=1,inplace=True)
-    
-    df.sort_values("x",inplace=True)
-    df.set_index("x", inplace=True)
-    return df
-    
-# Transforms spectroscopy format: FrameX\n64.624;305.000...\n\nFrameX+1 to Pandas DataFrame
-# ASSUMPTION: we always have the same x entries for all Frames!
-def convertTxtToPandaFrame(inputf):
-    with open(inputf) as f:
-        content = f.readlines()
-    
-    parsedObject = {}    
-    columns = ["x"]
-    wholesetlistings = {}  
-    
-    # each line can be:
-    # x;y pair
-    # FrameX
-    # empty line  
-    # Create a datastructure with:
-    # all columns (Frame1,Frame2...) in columns
-    # a dictionary of format key = x value = list of y in wholesetlistings
-    for line2 in content:
-        line = line2.replace("\n","")
-        
-        # check if valid format
-        if not "Frame" in line and not ";" in line and len(line)>1:
-            raise Exception("Format problem")
-        if "Frame" in line:
-            columns.append(line)
-            continue
-        if ";" in line:
-            # check if valid format
-            if len(line.split(";")) != 2:
-                raise Exception("wrong format")
-            # create a new key and list entry in wholesetlistings
-            if line.split(";")[0] not in wholesetlistings:
-                wholesetlistings[line.split(";")[0]]=[]
-            # append y value for a given x value    
-            wholesetlistings[line.split(";")[0]].append(float(line.split(";")[1]))
-    
-    # check if we dont have only x column
-    if len(columns) <2:
-        raise Exception("No Frames in set found")
-    
-    # create columns
-    for col in columns:
-        parsedObject[col]=[]     
-    
-    # go through each x value
-    for entry in wholesetlistings:
-        parsedObject["x"].append(float(entry))
-        # append each y val for the given x val
-        for g,i in enumerate(columns[1:]):
-            parsedObject[i].append(float(wholesetlistings[entry][g]))
-        
-    df = pd.DataFrame(parsedObject)
-    df.sort_values("x",inplace=True)
-    df.set_index("x", inplace=True)
-    return df
 
 root = None
 def main():
