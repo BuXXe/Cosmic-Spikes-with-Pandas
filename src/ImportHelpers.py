@@ -37,7 +37,6 @@ def convertTxtToPandaFrame(inputf):
     # a dictionary of format key = x value = list of y in wholesetlistings
     for line2 in content:
         line = line2.replace("\n","")
-        
         # check if valid format
         if not "Frame" in line and not ";" in line and len(line)>1:
             raise Exception("Format problem")
@@ -72,6 +71,7 @@ def convertTxtToPandaFrame(inputf):
     df = pd.DataFrame(parsedObject)
     df.sort_values("x",inplace=True)
     df.set_index("x", inplace=True)
+
     return df
 
 

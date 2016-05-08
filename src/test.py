@@ -59,9 +59,12 @@ class CustomTest(Test):
     #
     # Callback to handle add_button widget option -command
     def add_button_command(self, *args):
-        # Open File / Files        
-        file_paths = tkFileDialog.askopenfilenames()
+        # Open File / Files      
+        filetypes  = [('text/csv files', '*.csv;*.txt'), ('all files', '.*')]
+        file_paths = tkFileDialog.askopenfilenames(filetypes = filetypes)
         for filepath in file_paths:
+            data = None
+
             try:
                 # differentiate if original spectroscopy txt or already processed csv
                 # use file ending as criterion
@@ -69,12 +72,15 @@ class CustomTest(Test):
                     data = ImportHelpers.convertTxtToPandaFrame(filepath)
                 elif os.path.splitext(filepath)[1].lower() == ".csv":
                     data = ImportHelpers.convertCsvToPandaFrame(filepath)
-                
+
+                if data is None:
+                    raise Exception("Import problem")
                 # append to data array and UI list
                 activeDataList.append(DataSet(data,os.path.split(filepath)[1]))
                 self.item_list.insert(END,os.path.split(filepath)[1])
             except :
                 self.write_to_Debug("[ERROR]: Processing of file: "+filepath+" failed\n", ("e"))
+
                 
     # export_csv_button_command --
     #
