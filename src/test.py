@@ -8,9 +8,8 @@
  and code inside the callback subroutines will be round-tripped.
  The 'main' function is reserved.
 """
-from __future__ import with_statement   # <-- Python 2.5 ONLY
 import Tix
-import time
+from SplashScreen import SplashScreen
 from Tkinter import *
 from test_ui import Test
 import tkFileDialog
@@ -23,8 +22,10 @@ import matplotlib
 matplotlib.use('TkAgg')
 import ImportHelpers
 
+# TODO: initial directory for dialogs
 # TODO: better integration of unpsike parameters. setting parameters after compeltion is dirty
 # TODO: problem with focus / selection of listbox lost when clicking somewhere else
+
 
 # BEGIN USER CODE global
 pd.set_option('display.mpl_style', 'default') # Make the graphs a bit prettier
@@ -42,6 +43,8 @@ activeDataList = []
 # END USER CODE global
 figu = None
 canvas =None
+
+
 class CustomTest(Test):
     pass
 
@@ -64,9 +67,10 @@ class CustomTest(Test):
         # Open File / Files      
         filetypes  = [('text/csv files', '*.csv;*.txt'), ('all files', '.*')]
         file_paths = tkFileDialog.askopenfilenames(filetypes = filetypes)
+        
+        # for each selected file do 
         for filepath in file_paths:
             data = None
-
             try:
                 # differentiate if original spectroscopy txt or already processed csv
                 # use file ending as criterion
@@ -77,118 +81,14 @@ class CustomTest(Test):
 
                 if data is None:
                     raise Exception("Import problem")
+                
                 # append to data array and UI list
-                activeDataList.append(DataSet(data,os.path.split(filepath)[1]))
+                activeDataList.append(DataSet(data , os.path.split(filepath)[1]))
                 self.item_list.insert(END,os.path.split(filepath)[1])
             except :
                 self.write_to_Debug("[ERROR]: Processing of file: "+filepath+" failed\n", ("e"))
 
-                
-    # export_csv_button_command --
-    #
-    # Callback to handle export_csv_button widget option -command
-    def export_csv_button_command(self, *args):
-        if self.item_list.curselection():
-            try:
-                filetypes  = [('all files', '.*'), ('text files', '.txt'), ('csv files', '.csv')]
-                filepath = tkFileDialog.asksaveasfilename(filetypes=filetypes,initialfile ="us"+activeDataList[self.item_list.curselection()[0]].filename.replace(".txt",".csv") )
-                if filepath =="":
-                    return
-                
-                activeDataList[self.item_list.curselection()[0]].exportAsCSV(filepath)
-                self.write_to_Debug("[INFO]: Data Set: "+self.item_list.get(self.item_list.curselection()[0]) +" exported as CSV to "+filepath+"\n",None)
-            except:
-                self.write_to_Debug("[ERROR]: There was an error exporting DataSet\n", ("e"))
 
-    # export_mean_button_command --
-    #
-    # Callback to handle export_csv_button widget option -command
-    def export_mean_button_command(self, *args):
-        if self.item_list.curselection():
-            try:
-                filetypes  = [('all files', '.*'), ('text files', '.txt'), ('csv files', '.csv')]
-
-                filepath = tkFileDialog.asksaveasfilename(filetypes=filetypes,initialfile ="usmean"+activeDataList[self.item_list.curselection()[0]].filename.replace(".txt",".csv"))
-                if filepath =="":
-                    return
-                
-                activeDataList[self.item_list.curselection()[0]].exportMeanAsCSV(filepath)
-                self.write_to_Debug("[INFO]: Unspiked Mean of Data Set: "+self.item_list.get(self.item_list.curselection()[0]) +" exported as CSV to "+filepath+"\n",None)
-            except:
-                self.write_to_Debug("[ERROR]: There was an error exporting DataSet\n", ("e"))
-
-    
-    def immediately(self,e):
-        self.updateTextBoxes()
-        self.createPreview()
-
-        
-    def updateTextBoxes(self):
-        if self.item_list.curselection():
-            self._text_3.config(state=NORMAL)
-            self._text_3.delete(1.0, END)
-            self._text_3.insert(END,activeDataList[self.item_list.curselection()[0]].getDescriptionOriginalData())
-            self._text_3.config(state=DISABLED)
-            self._text_2.config(state=NORMAL)
-            self._text_2.delete(1.0, END)
-            self._text_2.insert(END,activeDataList[self.item_list.curselection()[0]].getDescriptionProcessedData())
-            self._text_2.config(state=DISABLED)
-
-    def createPreview(self):
-        global figu
-        global canvas
-        if figu == None:
-            figu = Figure(frameon=False,figsize=(1,1), dpi=100)
-            
-            figu.clf()
-            a = figu.add_subplot(111)
-            
-            if self.item_list.curselection():
-                activeDataList[self.item_list.curselection()[0]].showGraphOriginal(ax=a)
-            
-            canvas = FigureCanvasTkAgg(figu, self._frame_4)
-            
-            canvas.get_tk_widget().grid(
-                in_    = self._frame_4,
-                column = 1,
-                row    = 6,
-                columnspan = 2,
-                ipadx = 0,
-                ipady = 0,
-                padx = 0,
-                pady = 0,
-                rowspan = 1,
-                sticky = "news")
-        else:
-            figu.clf()
-            a = figu.add_subplot(111)
-            
-            if self.item_list.curselection():
-                activeDataList[self.item_list.curselection()[0]].showGraphOriginal(ax=a)
-            canvas.show()    
-            canvas.draw()
-
-    # plot_original_button_command --
-    #
-    # Callback to handle plot_original_button widget option -command
-    def plot_original_button_command(self, *args):
-        if self.item_list.curselection():
-            activeDataList[self.item_list.curselection()[0]].showGraphOriginal()
-        
-    # plot_unspiked_button_command --
-    #
-    # Callback to handle plot_unspiked_button widget option -command
-    def plot_unspiked_button_command(self, *args):
-        if self.item_list.curselection():
-            activeDataList[self.item_list.curselection()[0]].showGraphProcessed()
-    
-    # plot_mean_button_command --
-    #
-    # Callback to handle plot_unspiked_button widget option -command
-    def plot_mean_button_command(self, *args):
-        if self.item_list.curselection():
-            activeDataList[self.item_list.curselection()[0]].showGraphProcessedMean()
-            
     # remove_button_command --
     #
     # Callback to handle remove_button widget option -command
@@ -213,97 +113,230 @@ class CustomTest(Test):
                 self.updateTextBoxes()
                 self.createPreview()
 
+    
+    # update parameter boxes and preview canvas
+    def immediately(self,e):
+        self.updateTextBoxes()
+        self.createPreview()
 
+    # put Dataset data in property frames    
+    def updateTextBoxes(self):
+        if self.item_list.curselection():
+            self._text_3.config(state=NORMAL)
+            self._text_3.delete(1.0, END)
+            self._text_3.insert(END,activeDataList[self.item_list.curselection()[0]].getDescription())
+            self._text_3.config(state=DISABLED)
+            #self._text_2.config(state=NORMAL)
+            #self._text_2.delete(1.0, END)
+            #self._text_2.insert(END,activeDataList[self.item_list.curselection()[0]].getDescriptionProcessedData())
+            #self._text_2.config(state=DISABLED)
+
+    # get the preview for the selected graph and put it into preview canvas
+    def createPreview(self):
+        global figu
+        global canvas
+        
+        # initial creation of preview window
+        if figu == None:
+            figu = Figure(frameon=False,figsize=(1,1), dpi=100)
+            
+            figu.clf()
+            a = figu.add_subplot(111)
+            
+            if self.item_list.curselection():
+                activeDataList[self.item_list.curselection()[0]].showGraphOriginal(ax=a)
+            
+            canvas = FigureCanvasTkAgg(figu, self._frame_4)
+            
+            canvas.get_tk_widget().grid(
+                in_    = self._frame_4,
+                column = 1,
+                row    = 14,
+                columnspan = 2,
+                ipadx = 0,
+                ipady = 0,
+                padx = 0,
+                pady = 0,
+                rowspan = 1,
+                sticky = "news")
+        else:
+            figu.clf()
+            a = figu.add_subplot(111)
+            
+            if self.item_list.curselection():
+                activeDataList[self.item_list.curselection()[0]].showGraphOriginal(ax=a)
+            canvas.show()    
+            canvas.draw()
+
+   
+    ####
+    # GUI Buttons / Controls
+    # - Export as CSV (Processed Set) (NON-Interpolated)
+    # - Export mean as CSV (Processed Set) (Interpolated)
+    #
+    # - Revert one step (History)
+    # - Reset to Original
+    # - Despike (cascaded menu for multiple methods? first approach: Trendline only) 
+    #     -> different Parameter sets need different UI
+    #     - Checkbox -> Debug Mode (Dry Run)
+    #
+    # - Show Original
+    # - Show Processed
+    # - Show Mean (Processed)
+    ####
+          
+          
+    ####
+    #
+    # EXPORT-FUNCTIONS
+    #
+    ####
+                 
+    # export_csv_button_command --
+    #
+    # Callback to handle export_csv_button widget option -command
+    def export_csv_button_command(self, *args):
+        if self.item_list.curselection():
+            try:
+                filetypes  = [('all files', '.*'), ('text files', '.txt'), ('csv files', '.csv')]
+                filepath = tkFileDialog.asksaveasfilename(filetypes=filetypes,initialfile ="us"+activeDataList[self.item_list.curselection()[0]].filename.replace(".txt",".csv") )
+                if filepath =="":
+                    return
+                
+                activeDataList[self.item_list.curselection()[0]].exportAsCSV(filepath)
+                self.write_to_Debug("[INFO]: Unpsiked Data Set: "+self.item_list.get(self.item_list.curselection()[0]) +" exported as CSV to "+filepath+"\n",None)
+            except:
+                self.write_to_Debug("[ERROR]: There was an error exporting DataSet\n", ("e"))
+
+    # export_mean_button_command --
+    #
+    # Callback to handle export_csv_button widget option -command
+    def export_mean_button_command(self, *args):
+        if self.item_list.curselection():
+            try:
+                filetypes  = [('all files', '.*'), ('text files', '.txt'), ('csv files', '.csv')]
+                filepath = tkFileDialog.asksaveasfilename(filetypes=filetypes,initialfile ="usmean"+activeDataList[self.item_list.curselection()[0]].filename.replace(".txt",".csv"))
+                if filepath =="":
+                    return
+                
+                activeDataList[self.item_list.curselection()[0]].exportMeanAsCSV(filepath)
+                self.write_to_Debug("[INFO]: Unspiked Mean of Data Set: "+self.item_list.get(self.item_list.curselection()[0]) +" exported as CSV to "+filepath+"\n",None)
+            except:
+                self.write_to_Debug("[ERROR]: There was an error exporting DataSet\n", ("e"))
+
+
+    ####
+    #
+    # DATASET-MANAGEMENT-FUNCTIONS
+    #
+    ####
+    
+    #TODO: update ui afterwards
+    def reset_dataset_button_command(self, *args):
+        if self.item_list.curselection():
+            activeDataList[self.item_list.curselection()[0]].reset()
+            
+    def revertstep_dataset_button_command(self, *args):
+        if self.item_list.curselection():
+            activeDataList[self.item_list.curselection()[0]].revertstep()
+    
+
+    ####
+    #
+    # PLOTTING-FUNCTIONS
+    #
+    ####
+
+
+    # plot_original_button_command --
+    #
+    # Callback to handle plot_original_button widget option -command
+    def plot_original_button_command(self, *args):
+        if self.item_list.curselection():
+            activeDataList[self.item_list.curselection()[0]].showGraphOriginal()
+        
+    # plot_unspiked_button_command --
+    #
+    # Callback to handle plot_unspiked_button widget option -command
+    def plot_unspiked_button_command(self, *args):
+        if self.item_list.curselection():
+            activeDataList[self.item_list.curselection()[0]].showGraphProcessed()
+    
+    # plot_mean_button_command --
+    #
+    # Callback to handle plot_unspiked_button widget option -command
+    def plot_mean_button_command(self, *args):
+        if self.item_list.curselection():
+            activeDataList[self.item_list.curselection()[0]].showGraphProcessedMean()
+            
+    ####
+    #
+    # UNSPIKE-FUNCTIONS
+    #
+    ####
+    
+    
     # run_unspike_button_command --
     #
     # Callback to handle run_unspike_button widget option -command
     def run_unspike_button_command(self, *args):
+        # TODO Unify this to fit a more abstract unspiking library
+        
+        
         # check if nothing is selected, then do nothing
         if not self.item_list.curselection():
             return
         
+        
         # try and get threshold / iteration count stop if not digits
-        threshold = self.threshold_entry.get()
-        iterations = self.iterations_entry.get()
-        if not iterations.isdigit():
-            self.write_to_Debug("[ERROR]: The iterations variable is not a valid number\n", ("e"))
+        trendlinedegree = self.threshold_entry.get()
+        errorfactor = self.iterations_entry.get()
+        minmeanerror = self.iterations_entry.get()
+        
+        if not trendlinedegree.isdigit():
+            self.write_to_Debug("[ERROR]: The trendline degree variable is not a valid number\n", ("e"))
             return
 
-        if not threshold.isdigit():
-            self.write_to_Debug("[ERROR]: The threshold variable is not a valid number\n", ("e"))
+        if not errorfactor.isdigit():
+            self.write_to_Debug("[ERROR]: The error factor variable is not a valid number\n", ("e"))
             return
-
-
+        
+        if not minmeanerror.isdigit():
+            self.write_to_Debug("[ERROR]: The min dist mean variable is not a valid number\n", ("e"))
+            return
+        
+        
+        
         # Unspiking starts here
-        activeDataList[self.item_list.curselection()[0]].initProcessedDataWithOriginal()
+        # activeDataList[self.item_list.curselection()[0]].initProcessedDataWithOriginal()
                 
-        for x in xrange(0,int(iterations)):
-            self.write_to_Debug("[INFO]: Computing iteration "+str(x+1)+" for data set.\n",None)
-            global root
-            root.update()
-            
-            #hasChanged = activeDataList[self.item_list.curselection()[0]].errorcorrectdiff( int(threshold),True)
-            hasChanged = activeDataList[self.item_list.curselection()[0]].sophisticatedErrorCorrection( int(threshold))
-            
-            # in case we reach a stagnation, stop processing
-            if hasChanged==False:
-                self.write_to_Debug("[INFO]: No more changes in iteration: "+str(x+1)+". Processing stopped\n",None)
-                break
-        self.write_to_Debug("[INFO]: Computations completed\n",None)
+        #for x in xrange(0,int(iterations)):
+        #    self.write_to_Debug("[INFO]: Computing iteration "+str(x+1)+" for data set.\n",None)
+        #    global root
+        #    root.update()
+        #    
+        #    #hasChanged = activeDataList[self.item_list.curselection()[0]].errorcorrectdiff( int(threshold),True)
+        #    hasChanged = activeDataList[self.item_list.curselection()[0]].sophisticatedErrorCorrection( int(threshold))
+        #    
+        #    # in case we reach a stagnation, stop processing
+        #    if hasChanged==False:
+        #        self.write_to_Debug("[INFO]: No more changes in iteration: "+str(x+1)+". Processing stopped\n",None)
+        #        break
+        #self.write_to_Debug("[INFO]: Computations completed\n",None)
 
-        # this sets the computation parameters in the dataset and visualizes them in the GUI
-        activeDataList[self.item_list.curselection()[0]].setProcessingParameters(int(iterations),int(threshold))
-        self.updateTextBoxes()
-        # Unspiking ends here
+        ## this sets the computation parameters in the dataset and visualizes them in the GUI
+        #activeDataList[self.item_list.curselection()[0]].setProcessingParameters(int(iterations),int(threshold))
+        #self.updateTextBoxes()
+        ## Unspiking ends here
+        
+        
+        # Unspike with library
+        
+        
 
 
     # END CALLBACK CODE
 
-class SplashScreen( object ):
-   def __init__( self, tkRoot, imageFilename, minSplashTime=0 ):
-      self._root              = tkRoot
-      self._image             = Tix.PhotoImage( file=imageFilename )
-      self._splash            = None
-      self._minSplashTime     = time.time() + minSplashTime
-      
-   def __enter__( self ):
-      # Remove the app window from the display
-      self._root.withdraw( )
-      
-      # Calculate the geometry to center the splash image
-      scrnWt = self._root.winfo_screenwidth( )
-      scrnHt = self._root.winfo_screenheight( )
-      
-      imgWt = self._image.width()
-      imgHt = self._image.height()
-      
-      imgXPos = (scrnWt / 2) - (imgWt / 2)
-      imgYPos = (scrnHt / 2) - (imgHt / 2)
-
-      # Create the splash screen      
-      self._splash = Tix.Toplevel()
-      self._splash.overrideredirect(1)
-      self._splash.geometry( '+%d+%d' % (imgXPos, imgYPos) )
-      Tix.Label( self._splash, image=self._image, cursor='watch' ).pack( )
-
-      # Force Tk to draw the splash screen outside of mainloop()
-      self._splash.update( )
-   
-   def __exit__( self, exc_type, exc_value, traceback ):
-      # Make sure the minimum splash time has elapsed
-      timeNow = time.time()
-      if timeNow < self._minSplashTime:
-         time.sleep( self._minSplashTime - timeNow )
-      
-      # Destroy the splash window
-      self._splash.destroy( )
-      
-      # Display the application window
-      self._root.deiconify( )
-
-
-#--------------------------------------------
-# Now putting up splash screens is simple
 
 
 root = None
@@ -314,23 +347,9 @@ def main():
     try: userinit()
     except NameError: pass
     global root
-    #root = Tk()
-    
-    
-    
-    
-    
-    
-#     demo = CustomTest(root)
-#     root.title('Unspike with Pandas')
-#     root.iconbitmap("Panda.ico")
-#     try: run()
-#     except NameError: pass
-#     root.protocol('WM_DELETE_WINDOW', root.destroy)
-#     root.mainloop()
-
+        
     root = Tix.Tk( )
-
+    
     with SplashScreen( root, 'Pandas.gif', 3.0 ):
         demo = CustomTest(root)
         root.title('Unspike with Pandas')
