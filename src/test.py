@@ -19,6 +19,8 @@ from DataSet import DataSet
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 import matplotlib
+import TrendlineUnspiking
+from ManualUnspiker import manualUnspiker
 matplotlib.use('TkAgg')
 import ImportHelpers
 
@@ -151,7 +153,7 @@ class CustomTest(Test):
             canvas.get_tk_widget().grid(
                 in_    = self._frame_4,
                 column = 1,
-                row    = 14,
+                row    = 15,
                 columnspan = 2,
                 ipadx = 0,
                 ipady = 0,
@@ -235,11 +237,13 @@ class CustomTest(Test):
     def reset_dataset_button_command(self, *args):
         if self.item_list.curselection():
             activeDataList[self.item_list.curselection()[0]].reset()
-            
-    def revertstep_dataset_button_command(self, *args):
+            self.updateTextBoxes()
+    
+    def revert_button_command(self, *args):
         if self.item_list.curselection():
             activeDataList[self.item_list.curselection()[0]].revertstep()
-    
+            self.updateTextBoxes()
+
 
     ####
     #
@@ -275,6 +279,50 @@ class CustomTest(Test):
     #
     ####
     
+    def dryrun_button_command(self, *args):
+                # TODO Unify this to fit a more abstract unspiking library
+        
+        
+        # check if nothing is selected, then do nothing
+        if not self.item_list.curselection():
+            return
+        
+        
+        # try and get threshold / iteration count stop if not digits
+        trendlinedegree = self.trendlinedegree_entry.get()
+        errorfactor = self.disterrfactor_entry.get()
+        minmeanerror = self.mindistmean_entry.get()
+        usetrendline = bool(self.useTrendlinevariable.get())
+        
+        if not trendlinedegree.isdigit():
+            self.write_to_Debug("[ERROR]: The trendline degree variable is not a valid number\n", ("e"))
+            return
+
+        if not errorfactor.isdigit():
+            self.write_to_Debug("[ERROR]: The error factor variable is not a valid number\n", ("e"))
+            return
+        
+        if not minmeanerror.isdigit():
+            self.write_to_Debug("[ERROR]: The min dist mean variable is not a valid number\n", ("e"))
+            return
+        
+        # Unspike with library
+        # directly works with dataset structure -> libary sets values in dataset directly
+        
+        TrendlineUnspiking.unspike(activeDataList[self.item_list.curselection()[0]], usetrendline, trendlinedegree, errorfactor, minmeanerror, True)
+        
+    
+
+    def manual_unspiker_button_command(self, *args):
+        # check if nothing is selected, then do nothing
+        if not self.item_list.curselection():
+            return        
+        
+        activeDataList[self.item_list.curselection()[0]].manualUnspike()
+        
+        
+        return
+    
     
     # run_unspike_button_command --
     #
@@ -289,9 +337,10 @@ class CustomTest(Test):
         
         
         # try and get threshold / iteration count stop if not digits
-        trendlinedegree = self.threshold_entry.get()
-        errorfactor = self.iterations_entry.get()
-        minmeanerror = self.iterations_entry.get()
+        trendlinedegree = self.trendlinedegree_entry.get()
+        errorfactor = self.disterrfactor_entry.get()
+        minmeanerror = self.mindistmean_entry.get()
+        usetrendline = bool(self.useTrendlinevariable.get())
         
         if not trendlinedegree.isdigit():
             self.write_to_Debug("[ERROR]: The trendline degree variable is not a valid number\n", ("e"))
@@ -305,7 +354,12 @@ class CustomTest(Test):
             self.write_to_Debug("[ERROR]: The min dist mean variable is not a valid number\n", ("e"))
             return
         
+        # Unspike with library
+        # directly works with dataset structure -> libary sets values in dataset directly
         
+        TrendlineUnspiking.unspike(activeDataList[self.item_list.curselection()[0]], usetrendline, trendlinedegree, errorfactor, minmeanerror, False)
+        self.updateTextBoxes()
+
         
         # Unspiking starts here
         # activeDataList[self.item_list.curselection()[0]].initProcessedDataWithOriginal()
@@ -330,7 +384,7 @@ class CustomTest(Test):
         ## Unspiking ends here
         
         
-        # Unspike with library
+
         
         
 

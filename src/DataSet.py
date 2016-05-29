@@ -3,10 +3,9 @@ Created on 23.12.2015
 
 @author: BuXXe
 '''
-import pandas as pd
+
 from numpy import sqrt, nan
-from scipy.ndimage.morphology import iterate_structure
-import numpy as np
+
 import matplotlib.pyplot as plt
    
 class DataSet(object):
@@ -20,19 +19,19 @@ class DataSet(object):
         # TESTING: History with ALL entries
         # Circumvents problem of only one step back and then what to do with the ui button
         # convention:  history consists of all data sets without processed data (history is filled before changing a set)
-        self.originalData = originalData
+        self.originalData = originalData.copy()
         self.history = []
         self.filename = filename
-        self.processedData = None
+        self.processedData = originalData
         
         # applied parameter history as list of parameters (ex: [("Trendline",True,30,4),("DFThreshold",15,5)]
-        self.paramterHistory=[]
+        self.parameterHistory=[]
         
         # parameters: TrendlineCorrection: T/F, Trendline Degree, Min Distance from mean, Distance Error Factor  
         #self.iterations = None
         #self.threshold = None
         #self.ARRPlot= None
-        #self.toDelete=[]
+        self.toDelete=[]
         
     def getDescription(self):
         description = ""
@@ -46,15 +45,15 @@ class DataSet(object):
         # append history of parameters 
         
         OperatorHistory = ""
-        if len(self.paramterHistory) == 0:
+        if len(self.parameterHistory) == 0:
             OperatorHistory = "\nOperator-History:\nWe have not yet processed this set!"
             
         else:
             OperatorHistory = "\nOperator-History:\n"
             # display parameters as string with their function (ex.: Trendline(True,30,4))
-            for operation in self.paramterHistory:
+            for operation in self.parameterHistory:
                 # tuple resolution
-                OperatorHistory +=str(operation)+ " "
+                OperatorHistory +=str(operation)+ "\n"
 
         description += "\n"+OperatorHistory                
         return description
@@ -74,13 +73,60 @@ class DataSet(object):
             # dont show a title, legend and axis definitions
             self.originalData.plot(legend  = False,ax=ax,xticks=[],yticks=[])
         else:
-            res = self.originalData.plot(title=self.filename,legend  = False)
+            self.originalData.plot(title=self.filename,legend  = False)
     
     def showGraphProcessed(self):
-        self.processedData.interpolate().plot(title=self.filename,legend  = False)
+        self.processedData.interpolate().plot(title=self.filename+" INTERPOLATED!",legend  = False)
     
     def showGraphProcessedMean(self):
         self.processedData.interpolate().mean(axis=1).plot(title=self.filename,legend  = False)    
+
+
+
+
+
+    def manualUnspike(self):
+        res = self.processedData.plot(title="MANUAL UNSPIKER\n"+self.filename,legend  = False,picker=2)
+        res.figure.canvas.mpl_connect('pick_event', self.onpick3)
+        res.figure.canvas.mpl_connect('key_release_event', self.onkeyhand)
+
+
+    def onkeyhand(self,event):
+            
+            print "test"
+            if event.key =="k":
+                if len(self.toDelete) >0:
+                    index = len(self.toDelete)-1
+                    circ = self.toDelete[index][2]
+                    del self.toDelete[index]
+                    circ.remove()
+                    plt.draw()
+            if event.key =="d":
+                for item in self.toDelete:
+                    self.originalData[item[0]][self.originalData.index.values[item[1]]] = nan
+                self.toDelete=[]
+                axi =  plt.gca().axis()
+                plt.cla()
+                self.originalData.plot(title=self.filename,ax=plt.gca(),legend  = False,picker=1)
+                plt.axis(axi)
+
+                    
+       
+    def onpick3(self,event):
+            print event.ind
+            print "test"
+            ind = event.ind
+    
+            xval = self.originalData[event.artist.get_label()].iloc[ind[0]]
+            yval = self.originalData.index.values[ind[0]]
+    
+            circle1=plt.Circle((yval,xval),5,color='r')
+            
+            self.toDelete.append((event.artist.get_label(),ind[0],circle1))
+            
+            event.artist.axes.add_artist(circle1)
+            plt.draw()
+            
 
     def revertstep(self):
         # TODO: ensure memory cleanup
@@ -88,15 +134,15 @@ class DataSet(object):
         # then remove history entry and parameter history entry
         if len(self.history) > 0:
             self.processedData = self.history.pop()
-            self.paramterHistory.pop()
+            self.parameterHistory.pop()
         
         return
     
     def reset(self):
         # TODO: ensure memory cleanup
-        self.paramterHistory = []
+        self.parameterHistory = []
         self.history = []
-        self.processedData = self.originalData
+        self.processedData = self.originalData.copy()
         
         return
 

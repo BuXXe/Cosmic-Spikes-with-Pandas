@@ -19,7 +19,6 @@ class Test(object):
     _images = [] # Holds image refs to prevent GC
     def __init__(self, root):
 
-
         # Widget Initialization
         self._frame_4 = Tkinter.Frame(root,
         )
@@ -46,7 +45,6 @@ class Test(object):
         self._label_Datasetmgt = Tkinter.Label(self._frame_4,
             text = "Dataset management",
         )
-        
         self.reset_dataset_button = Tkinter.Button(self._frame_4,
             text = "Reset dataset",
         )
@@ -54,16 +52,13 @@ class Test(object):
             text = "Revert one step",
         )
         
-        
         # Plotting Dataset UI Elements
         self._label_Plotting = Tkinter.Label(self._frame_4,
             text = "Plot dataset",
         )        
-        
         self.plot_mean_button = Tkinter.Button(self._frame_4,
             text = "Mean Unspiked",
         )      
-
         self.plot_original_button = Tkinter.Button(self._frame_4,
             text = "Original",
         )
@@ -71,30 +66,31 @@ class Test(object):
             text = "Unspiked",
         )        
 
-        
+        # Export Dataset UI Elements
         self._label_Export = Tkinter.Label(self._frame_4,
             text = "Export dataset",
         )
-        
         self.export_mean_button = Tkinter.Button(self._frame_4,
-            text = "Export Mean Unspiked",
+            text = "Mean unspiked",
         )
-        
         self.export_csv_button = Tkinter.Button(self._frame_4,
-            text = "Export unspiked as CSV",
+            text = "Unspiked as CSV",
         )
         
-        
+        # Unspiking Dataset UI Elements
         self._label_Unspiking = Tkinter.Label(self._frame_4,
             text = "Unspiking functions",
         )
-        
         self.run_unspike_button = Tkinter.Button(self._frame_4,
             text = "Run Unspike",
         )
         self.dryrun_button = Tkinter.Button(self._frame_4,
             text = "Dryrun",
         )
+        
+        self.manual_unspiker_button = Tkinter.Button(self._frame_4,
+            text = "Manual unspiker",
+        )     
 
         self._label_1 = Tkinter.Label(self._frame_4,
             text = "Min dist. from mean",
@@ -112,11 +108,12 @@ class Test(object):
         )
         self.trendlinedegree_entry.insert(0, "90")
         
+        self.useTrendlinevariable = Tkinter.IntVar()
         self.enableTrendline_checkbox = Tkinter.Checkbutton(self._frame_4, 
-            text="Use trendline",
+            text="Use trendline",variable=self.useTrendlinevariable
         )
-        self.enableTrendline_checkbox.select()
-        
+        self.enableTrendline_checkbox.select()        
+       
         
         self.disterrfactor_entry = Tkinter.Entry(self._frame_4,
             width = 1,
@@ -126,21 +123,13 @@ class Test(object):
         self._label_2 = Tkinter.Label(self._frame_4,
             text = "Distance error factor",
         )
+        
+        
+        # Dataset information UI Elements
         self._label_3 = Tkinter.Label(root,
             text = "Dataset information",
         )
-#         self._label_4 = Tkinter.Label(root,
-#             text = "Unspiked Data",
-#         )
 
-#         self.canvas_preview = Tkinter.Canvas(self._frame_4,
-#             width = 1,
-#         )
-#         self._text_2 = Tkinter.Text(root,
-#             height = 1,
-#             state = "disabled",
-#             width = 1,
-#         )
         self._text_3 = Tkinter.Text(root,
             height = 1,
             state = "disabled",
@@ -148,10 +137,7 @@ class Test(object):
         )
 
         # widget commands
-
-
         self.item_list.bind('<<ListboxSelect>>', self.immediately)
-
 
         self.add_button.configure(
             command = self.add_button_command
@@ -159,14 +145,37 @@ class Test(object):
         self.remove_button.configure(
             command = self.remove_button_command
         )
+        
+        # Dataset Management Buttons Binding
+        self.reset_dataset_button.configure(
+            command = self.reset_dataset_button_command
+        )
+        self.revert_button.configure(
+            command = self.revert_button_command
+        )
+        
+        # Unspike Buttons Binding        
+        
         self.run_unspike_button.configure(
             command = self.run_unspike_button_command
+        )
+        self.dryrun_button.configure(
+            command = self.dryrun_button_command
+        )
+        self.manual_unspiker_button.configure(
+            command = self.manual_unspiker_button_command
+        )
+
+
+        # Export Buttons Binding
+        self.export_mean_button.configure(
+            command = self.export_mean_button_command
         )
         self.export_csv_button.configure(
             command = self.export_csv_button_command
         )
-
-
+        
+        # Plot Buttons Bindings
         self.plot_original_button.configure(
             command = self.plot_original_button_command
         )
@@ -176,10 +185,6 @@ class Test(object):
         self.plot_mean_button.configure(
             command = self.plot_mean_button_command
         )
-        self.export_mean_button.configure(
-            command = self.export_mean_button_command
-        )
-        
 
 
         # Geometry Management
@@ -375,9 +380,7 @@ class Test(object):
             sticky = "nsew"
         )
         
-        
-        # Unspike UI Elements positioning
-        
+        # Unspike UI Elements positioning    
         self._label_Unspiking.grid(
             in_    = self._frame_4,
             column = 1,
@@ -464,8 +467,7 @@ class Test(object):
             rowspan = 1,
             sticky = ""
         )
-        
-        
+    
         self.enableTrendline_checkbox.grid(
             in_    = self._frame_4,
             column = 1,
@@ -478,7 +480,6 @@ class Test(object):
             rowspan = 1,
             sticky = "ew"
         )
-        
         
         self.run_unspike_button.grid(
             in_    = self._frame_4,
@@ -506,11 +507,20 @@ class Test(object):
             rowspan = 1,
             sticky = "nsew"
         )
-        
-        
-        
-        
-        
+           
+        self.manual_unspiker_button.grid(
+            in_    = self._frame_4,
+            column = 1,
+            row    = 14,
+            columnspan = 2,
+            ipadx = 0,
+            ipady = 0,
+            padx = 0,
+            pady = 0,
+            rowspan = 1,
+            sticky = "nsew"
+        )
+                     
         self._label_3.grid(
             in_    = root,
             column = 4,
@@ -523,47 +533,7 @@ class Test(object):
             rowspan = 1,
             sticky = "sw"
         )
-#         self._label_4.grid(
-#             in_    = root,
-#             column = 4,
-#             row    = 3,
-#             columnspan = 1,
-#             ipadx = 0,
-#             ipady = 0,
-#             padx = 0,
-#             pady = 0,
-#             rowspan = 1,
-#             sticky = "sw"
-#         )
-        
-        
-        
-        
-       
-#         self.canvas_preview.grid(
-#             in_    = self._frame_4,
-#             column = 1,
-#             row    = 5,
-#             columnspan = 2,
-#             ipadx = 0,
-#             ipady = 0,
-#             padx = 0,
-#             pady = 0,
-#             rowspan = 1,
-#             sticky = "nsew"
-#         )
-#         self._text_2.grid(
-#             in_    = root,
-#             column = 4,
-#             row    = 4,
-#             columnspan = 2,
-#             ipadx = 0,
-#             ipady = 0,
-#             padx = 0,
-#             pady = 0,
-#             rowspan = 1,
-#             sticky = "news"
-#         )
+
         self._text_3.grid(
             in_    = root,
             column = 4,
@@ -576,8 +546,7 @@ class Test(object):
             rowspan = 3,
             sticky = "news"
         )
-
-
+        
         # Resize Behavior
         root.grid_rowconfigure(1, weight = 0, minsize = 0, pad = 0)
         root.grid_rowconfigure(2, weight = 3, minsize = 0, pad = 0)
@@ -603,6 +572,7 @@ class Test(object):
         self._frame_4.grid_rowconfigure(12, weight = 0, minsize = 2, pad = 0)
         self._frame_4.grid_rowconfigure(13, weight = 0, minsize = 2, pad = 0)
         self._frame_4.grid_rowconfigure(14, weight = 0, minsize = 2, pad = 0)
+        self._frame_4.grid_rowconfigure(15, weight = 0, minsize = 2, pad = 0)
 
         self._frame_4.grid_columnconfigure(1, weight = 0, minsize = 40, pad = 0)
         self._frame_4.grid_columnconfigure(2, weight = 0, minsize = 40, pad = 0)
