@@ -36,6 +36,10 @@ def unspike(data, useTrendline = True, trendlinedegree  = 90, errorfactor=3, min
     #plt.cla()
     
     
+    #print data.processedData.loc[1150:].loc[:1152]
+
+    #print data.processedData.loc[data.processedData['x'] < 1152 and data.processedData['x'] > 1150]
+    
     # append the current processed data to history and parameter history with current params
     # only if not in debug mode
     if not debug:
@@ -48,14 +52,14 @@ def unspike(data, useTrendline = True, trendlinedegree  = 90, errorfactor=3, min
             #print framenr 
             # compute trendline
             x = data.processedData.index.values
-            y = data.processedData["Frame "+str(framenr)].as_matrix()
+            y = data.processedData.interpolate()["Frame "+str(framenr)].as_matrix()
     
             z = np.polyfit(x, y, trendlinedegree)
             p = np.poly1d(z)
     
     #                originalFrame.plot(title=self.filename,ax=plt.gca(),legend  = False,picker=1)
     
-            orig = data.processedData["Frame "+str(framenr)]-p(x)
+            orig = data.processedData.interpolate()["Frame "+str(framenr)]-p(x)
             trendlinecalcs.append(orig)
             #orig.plot(title=data.filename,ax=plt.gca(),legend  = False,picker=1)
             
@@ -72,8 +76,7 @@ def unspike(data, useTrendline = True, trendlinedegree  = 90, errorfactor=3, min
     # ensure only positive values
     dataft = dataft + abs(dataft.min().min()) + 5.0
 
-
-
+    #print dataft.loc[1150:].loc[:1152]
     
     #if not TRENDLINESUBSTRACTION:
     #    dataft=data
@@ -110,9 +113,12 @@ def unspike(data, useTrendline = True, trendlinedegree  = 90, errorfactor=3, min
             # get frame of the max value
             fram = row.index.values[distances.index(max(distances))]
             
+#             if dataft.index[x] > 1150 and dataft.index[x] < 1152: 
+#                 print dataft.index[x]," ",distances 
+            
             if max(distances) > float(errorfactor)*meandis  and max(distances)>float(minmeandist):
 
-                yval = data.processedData[fram][dataft.index.values[x]]
+                yval = data.processedData.interpolate()[fram][dataft.index.values[x]]
                 xval = dataft.index.values[x]
                 
                 if debug:
@@ -127,7 +133,7 @@ def unspike(data, useTrendline = True, trendlinedegree  = 90, errorfactor=3, min
     
     #plt.cla()
     if debug:
-        data.processedData.plot(title=data.filename,legend  = False) 
+        data.processedData.interpolate().plot(title=data.filename,legend  = False) 
         for c in circles:    
             circle1=plt.Circle((c[1],c[0]),6,color='r')
             plt.gca().add_artist(circle1)

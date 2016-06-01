@@ -19,6 +19,8 @@ class Test(object):
     _images = [] # Holds image refs to prevent GC
     def __init__(self, root):
 
+        self.lastdirectory = os.getcwd()
+        
         # Widget Initialization
         self._frame_4 = Tkinter.Frame(root,
         )

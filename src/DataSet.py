@@ -5,7 +5,7 @@ Created on 23.12.2015
 '''
 
 from numpy import sqrt, nan
-
+from matplotlib.patches import Ellipse
 import matplotlib.pyplot as plt
    
 class DataSet(object):
@@ -84,11 +84,13 @@ class DataSet(object):
 
 
 
-
-    def manualUnspike(self):
+    
+    def manualUnspike(self, ui):
         res = self.processedData.interpolate().plot(title="MANUAL UNSPIKER\nd: delete marked points , w: undo last marking\n"+self.filename,legend  = False,picker=2)
         res.figure.canvas.mpl_connect('pick_event', self.onpick3)
         res.figure.canvas.mpl_connect('key_release_event', self.onkeyhand)
+        # INFO: dirty workaround in order to update ui on delete 
+        self.ui = ui
 
 
     def onkeyhand(self,event):
@@ -120,8 +122,10 @@ class DataSet(object):
                     plt.cla()
                     self.processedData.interpolate().plot(title="MANUAL UNSPIKER\nd: delete marked points , w: undo last marking\n"+self.filename,ax=plt.gca(),legend  = False,picker=2)
                     plt.axis(axi)
+                    self.ui.updateTextBoxes()
 
                     
+
        
     def onpick3(self,event):
             # ensure there are no double entries!
@@ -134,13 +138,23 @@ class DataSet(object):
             yval = self.processedData[event.artist.get_label()].iloc[ind[0]]
             xval = self.processedData.index.values[ind[0]]
     
-            circle1=plt.Circle((xval,yval),5,color='r')
+            #circle1=plt.Circle((xval,yval),2,color='r')
+            
+            # to avoid the distortion we use an ellipse with respect to aspect ratio
+            height = self.processedData.max().max() - abs(self.processedData.min().min())
+            width = self.processedData.index.values.max() - abs(self.processedData.index.values.min())
+            
+            aspect = height/width
+             
+            radius = 3.0
+            circle1= Ellipse((xval,yval), radius/aspect,aspect*radius,color='r')
             
             # toDelete content: Frame, xpos, circle instance
             self.toDelete.append((event.artist.get_label(),ind[0],circle1))
             
             event.artist.axes.add_artist(circle1)
             plt.draw()
+            
             
 
     def revertstep(self):

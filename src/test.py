@@ -20,7 +20,6 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 import matplotlib
 import TrendlineUnspiking
-from ManualUnspiker import manualUnspiker
 matplotlib.use('TkAgg')
 import ImportHelpers
 
@@ -49,6 +48,7 @@ canvas =None
 
 class CustomTest(Test):
     pass
+    
 
     # BEGIN CALLBACK CODE
     # ONLY EDIT CODE INSIDE THE def FUNCTIONS.
@@ -68,7 +68,11 @@ class CustomTest(Test):
     def add_button_command(self, *args):
         # Open File / Files      
         filetypes  = [('text/csv files', '*.csv;*.txt'), ('all files', '.*')]
-        file_paths = tkFileDialog.askopenfilenames(filetypes = filetypes)
+        file_paths = tkFileDialog.askopenfilenames(initialdir=self.lastdirectory,filetypes = filetypes)
+        
+        if len(file_paths)>0:
+            self.lastdirectory = os.path.split(file_paths[0])[0]
+        
         
         # for each selected file do 
         for filepath in file_paths:
@@ -201,9 +205,13 @@ class CustomTest(Test):
         if self.item_list.curselection():
             try:
                 filetypes  = [('all files', '.*'), ('text files', '.txt'), ('csv files', '.csv')]
-                filepath = tkFileDialog.asksaveasfilename(filetypes=filetypes,initialfile ="us"+activeDataList[self.item_list.curselection()[0]].filename.replace(".txt",".csv") )
+                filepath = tkFileDialog.asksaveasfilename(initialdir=self.lastdirectory, filetypes=filetypes,initialfile ="us"+activeDataList[self.item_list.curselection()[0]].filename.replace(".txt",".csv") )
                 if filepath =="":
                     return
+                
+                if len(filepath)>0:
+                    self.lastdirectory = os.path.split(filepath)[0]
+        
                 
                 activeDataList[self.item_list.curselection()[0]].exportAsCSV(filepath)
                 self.write_to_Debug("[INFO]: Unpsiked Data Set: "+self.item_list.get(self.item_list.curselection()[0]) +" exported as CSV to "+filepath+"\n",None)
@@ -217,10 +225,12 @@ class CustomTest(Test):
         if self.item_list.curselection():
             try:
                 filetypes  = [('all files', '.*'), ('text files', '.txt'), ('csv files', '.csv')]
-                filepath = tkFileDialog.asksaveasfilename(filetypes=filetypes,initialfile ="usmean"+activeDataList[self.item_list.curselection()[0]].filename.replace(".txt",".csv"))
+                filepath = tkFileDialog.asksaveasfilename(initialdir=self.lastdirectory, filetypes=filetypes,initialfile ="usmean"+activeDataList[self.item_list.curselection()[0]].filename.replace(".txt",".csv"))
                 if filepath =="":
                     return
-                
+                if len(filepath)>0:
+                    self.lastdirectory = os.path.split(filepath)[0]
+                    
                 activeDataList[self.item_list.curselection()[0]].exportMeanAsCSV(filepath)
                 self.write_to_Debug("[INFO]: Unspiked Mean of Data Set: "+self.item_list.get(self.item_list.curselection()[0]) +" exported as CSV to "+filepath+"\n",None)
             except:
@@ -317,8 +327,8 @@ class CustomTest(Test):
         # check if nothing is selected, then do nothing
         if not self.item_list.curselection():
             return        
-        
-        activeDataList[self.item_list.curselection()[0]].manualUnspike()
+        # INFO: dirty workaround: pass self in order to update gui each time the manual spiker deletes points
+        activeDataList[self.item_list.curselection()[0]].manualUnspike(self)
         
         
         return
