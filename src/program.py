@@ -154,6 +154,10 @@ class Program(ProgramUI):
                 
                 if len(filepath)>0:
                     self.lastdirectory = os.path.split(filepath)[0]
+                    
+                # append parameter history to logfile
+                with open("logfile.txt", "a") as logfile:
+                    logfile.write(activeDataList[self.item_list.curselection()[0]].getLogEntry()+"\n")
 
                 activeDataList[self.item_list.curselection()[0]].exportAsCSV(filepath)
                 self.write_to_Debug("[INFO]: Unpsiked Data Set: "+self.item_list.get(self.item_list.curselection()[0]) +" exported as CSV to "+filepath+"\n",None)
@@ -169,6 +173,10 @@ class Program(ProgramUI):
                     return
                 if len(filepath)>0:
                     self.lastdirectory = os.path.split(filepath)[0]
+                    
+                # append parameter history to logfile
+                with open("logfile.txt", "a") as logfile:
+                    logfile.write(activeDataList[self.item_list.curselection()[0]].getLogEntry()+"\n")
                     
                 activeDataList[self.item_list.curselection()[0]].exportMeanAsCSV(filepath)
                 self.write_to_Debug("[INFO]: Unspiked Mean of Data Set: "+self.item_list.get(self.item_list.curselection()[0]) +" exported as CSV to "+filepath+"\n",None)

@@ -58,6 +58,21 @@ class DataSet(object):
 
         description += "\n"+OperatorHistory                
         return description
+    
+    def getLogEntry(self):
+        title = "Original Filename: "+self.filename+"\n"
+        # append history of parameters
+        OperatorHistory = ""
+        if len(self.parameterHistory) == 0:
+            OperatorHistory = "\nOperator-History:\nWe have not yet processed this set!"    
+        else:
+            OperatorHistory = "\nOperator-History:\n"
+            # display parameters as string with their function (ex.: Trendline(True,30,4,50))
+            for operation in self.parameterHistory:
+                OperatorHistory +=str(operation)+ "\n"
+
+        description = title + OperatorHistory + "---------------------------------------"
+        return description   
      
     def getOriginalData(self):
         return self.originalData 
