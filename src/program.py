@@ -2,10 +2,8 @@
 Created on 23.12.2015
 
 @author: Christopher Skerra, Dennis Skerra
-@contact: Skerra.Christopher@yahoo.de
-
-Licensed under CC BY-NC-SA 4.0
-https://creativecommons.org/licenses/by-nc-sa/4.0/
+@contact: Skerra.Christopher@yahoo.de - https://github.com/BuXXe/Cosmic-Spikes-with-Pandas
+@license: Licensed under CC BY-NC-SA 4.0 - https://creativecommons.org/licenses/by-nc-sa/4.0/
 
 '''
 

@@ -2,10 +2,10 @@
 Created on 25.05.2016
 
 @author: Ronald Longo
+@License: Licensed under the PSF: https://opensource.org/licenses/PythonSoftFoundation.php
 
 Source: http://code.activestate.com/recipes/534124-elegant-tkinter-splash-screen/
-
-Licensed under the PSF: https://opensource.org/licenses/PythonSoftFoundation.php 
+ 
 '''
 import Tix
 import time

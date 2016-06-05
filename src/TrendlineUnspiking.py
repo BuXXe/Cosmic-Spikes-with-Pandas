@@ -2,10 +2,8 @@
 Created on 23.12.2015
 
 @author: Christopher Skerra, Dennis Skerra
-@contact: Skerra.Christopher@yahoo.de
-
-Licensed under CC BY-NC-SA 4.0
-https://creativecommons.org/licenses/by-nc-sa/4.0/
+@contact: Skerra.Christopher@yahoo.de - https://github.com/BuXXe/Cosmic-Spikes-with-Pandas
+@license: Licensed under CC BY-NC-SA 4.0 - https://creativecommons.org/licenses/by-nc-sa/4.0/ 
 
 '''
 
@@ -31,50 +29,30 @@ def unspike(data, useTrendline = True, trendlinedegree  = 90, errorfactor=3, min
     # calculate the trendline and subtract it from the frame 
     if useTrendline:
         trendlinecalcs = []
-        # TODO: take real frame numbers!!!! WARNING!!!
-        for framenr in xrange(1,len(data.processedData.columns)+1):
+         
+        for frame in data.processedData.columns.values:
             # compute trendline
             x = data.processedData.index.values
-            y = data.processedData.interpolate()["Frame "+str(framenr)].as_matrix()
+            y = data.processedData.interpolate()[frame].as_matrix()
     
             z = np.polyfit(x, y, trendlinedegree)
             p = np.poly1d(z)
     
-    #                originalFrame.plot(title=self.filename,ax=plt.gca(),legend  = False,picker=1)
-    
-            orig = data.processedData.interpolate()["Frame "+str(framenr)]-p(x)
+            orig = data.processedData.interpolate()[frame]-p(x)
             trendlinecalcs.append(orig)
-            #orig.plot(title=data.filename,ax=plt.gca(),legend  = False,picker=1)
-            
-            #plt.plot(x,p(x),"r-")
-        # get same zoomfactor as before 
-        #plt.axis(axi)
         
         dataft = pd.concat(trendlinecalcs, axis=1)
-    
-
     else: 
         dataft = data.processedData.copy()
     
     # ensure only positive values
     dataft = dataft + abs(dataft.min().min()) + 5.0
 
-    
-    #if not TRENDLINESUBSTRACTION:
-    #    dataft=data
-    
-    #plt.cla()
-    #dataft.plot(title=data.filename,ax=plt.gca(),legend  = False,picker=1)
-    
-    # TRENDLINE STUFF END
-    
-    #frames = dataft.columns.values
     circles = []
     
     # walk over each row 
     for x in xrange(0,len(dataft.index)):
-        # series of frames
-        # get row and sort values
+
         row = dataft.iloc[x].sort_values( ascending=False)
         
         # get mean distance (all points: distance a point to its next neighbour)
@@ -83,7 +61,6 @@ def unspike(data, useTrendline = True, trendlinedegree  = 90, errorfactor=3, min
             # distance to next neighbour point
             meandist.append(ent-row[ind+1])   
         meandis = sum(meandist)/float(len(meandist))    
-        
         
         # now we check only those points lying over the mean of all points
         try:
@@ -95,11 +72,7 @@ def unspike(data, useTrendline = True, trendlinedegree  = 90, errorfactor=3, min
             # get frame of the max value
             fram = row.index.values[distances.index(max(distances))]
             
-#             if dataft.index[x] > 1150 and dataft.index[x] < 1152: 
-#                 print dataft.index[x]," ",distances 
-            
             if max(distances) > float(errorfactor)*meandis  and max(distances)>float(minmeandist):
-
                 yval = data.processedData.interpolate()[fram][dataft.index.values[x]]
                 xval = dataft.index.values[x]
                 
@@ -107,13 +80,10 @@ def unspike(data, useTrendline = True, trendlinedegree  = 90, errorfactor=3, min
                     circles.append((yval,xval))
                 else:
                     data.processedData[fram][dataft.index.values[x]] = nan
-
         except:
             pass        
     
-    # debug output with circles
-    
-    #plt.cla()
+    # if dryrun, plot processed set with points to be removed marked as circles
     if debug:
         data.processedData.interpolate().plot(title=data.filename,legend  = False) 
         for c in circles:    
@@ -122,14 +92,3 @@ def unspike(data, useTrendline = True, trendlinedegree  = 90, errorfactor=3, min
         plt.draw()
     
     return    
-
-
-
- 
-    
-
-    
-    
-    
-
-
