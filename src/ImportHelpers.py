@@ -1,13 +1,19 @@
 '''
 Created on 23.12.2015
 
-@author: BuXXe
+@author: Christopher Skerra, Dennis Skerra
+@contact: Skerra.Christopher@yahoo.de
+
+Licensed under CC BY-NC-SA 4.0
+https://creativecommons.org/licenses/by-nc-sa/4.0/
+
 '''
+
+import pandas as pd
+
 # We want to import an already processed set
 # we have to ensure that it has the same Dataframe format as the Txt importer
 # meaning: columns may only be x, Frame1, Frame2.....
-import pandas as pd
-
 def convertCsvToPandaFrame(inputf):
     df = pd.read_csv(inputf,sep=";")
     for entry in df.columns.values:

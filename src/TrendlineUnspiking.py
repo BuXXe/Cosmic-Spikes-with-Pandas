@@ -1,55 +1,38 @@
 '''
-Created on 26.05.2016
+Created on 23.12.2015
 
-@author: BuXXe
+@author: Christopher Skerra, Dennis Skerra
+@contact: Skerra.Christopher@yahoo.de
+
+Licensed under CC BY-NC-SA 4.0
+https://creativecommons.org/licenses/by-nc-sa/4.0/
+
 '''
-
 
 import matplotlib.pyplot as plt   
 import pandas as pd
 import numpy as np
 from numpy import  nan
-# EACH Library has do to this:
-# deliver a debug function for dry runs
-# deliver a function for unspiking given sets
 
 # TODO: future perhaps use a params set instead of single  variables
-#def unspike(params):
+# def unspike(params):
     
+# INFO: in the future, there should be some kind of interface driven system to define unspiking methods
+# each method should provide a dryrun and a normal run functionality
 
-
-# return processed set or open debug plot
+# debug defines if we have a dryrun or a real run
 def unspike(data, useTrendline = True, trendlinedegree  = 90, errorfactor=3, minmeandist=100,debug=False):
 
-    # print data
-    # TODO WORK ON WHOLE DATASET STRUCTURE!! 
-    # TRENDLINESUBSTRACTION= True
-    
-    # had to plot FIRST then do everything else
-    # TRENDLINE STUFF BEGIN
-    
-    # used to get same zoomfactor etc
-    # axi =  plt.gca().axis()
-    
-    # TODO add to history first
-    
-    #plt.cla()
-    
-    
-    #print data.processedData.loc[1150:].loc[:1152]
-
-    #print data.processedData.loc[data.processedData['x'] < 1152 and data.processedData['x'] > 1150]
-    
-    # append the current processed data to history and parameter history with current params
-    # only if not in debug mode
+    # if not dryrun, update histories
     if not debug:
         data.history.append(data.processedData.copy())
         data.parameterHistory.append(("Trendline", useTrendline,trendlinedegree,errorfactor,minmeandist))
 
+    # calculate the trendline and subtract it from the frame 
     if useTrendline:
         trendlinecalcs = []
+        # TODO: take real frame numbers!!!! WARNING!!!
         for framenr in xrange(1,len(data.processedData.columns)+1):
-            #print framenr 
             # compute trendline
             x = data.processedData.index.values
             y = data.processedData.interpolate()["Frame "+str(framenr)].as_matrix()
@@ -69,14 +52,13 @@ def unspike(data, useTrendline = True, trendlinedegree  = 90, errorfactor=3, min
         
         dataft = pd.concat(trendlinecalcs, axis=1)
     
-    #print dataft
+
     else: 
         dataft = data.processedData.copy()
     
     # ensure only positive values
     dataft = dataft + abs(dataft.min().min()) + 5.0
 
-    #print dataft.loc[1150:].loc[:1152]
     
     #if not TRENDLINESUBSTRACTION:
     #    dataft=data

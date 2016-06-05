@@ -1,11 +1,14 @@
 '''
 Created on 25.05.2016
 
-@author: BuXXe
+@author: Ronald Longo
+
+Source: http://code.activestate.com/recipes/534124-elegant-tkinter-splash-screen/
+
+Licensed under the PSF: https://opensource.org/licenses/PythonSoftFoundation.php 
 '''
 import Tix
 import time
-
 
 class SplashScreen( object ):
 
